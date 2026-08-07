@@ -1,25 +1,25 @@
-# Creator Platform Data
+# 创作者平台数据采集
 
-Local project for collecting creator analytics from multiple Chinese creator centers. The GitHub project exposes one unified Codex Skill at `skills/creator-platform-data`.
+本项目用于从多个中文创作者中心采集创作者数据。GitHub 项目里提供一个统一 Codex Skill：`skills/creator-platform-data`。
 
-## Platforms
+## 平台
 
-- Douyin: use `scripts/douyin/collect_snapshot.py`.
-- Xiaohongshu: use `scripts/xiaohongshu/collect_xiaohongshu.py`.
+- 抖音：使用 `scripts/douyin/collect_snapshot.py`。
+- 小红书：使用 `scripts/xiaohongshu/collect_xiaohongshu.py`。
 
 ## Skill
 
-Use `skills/creator-platform-data` as the single Skill entrypoint. It routes Douyin and Xiaohongshu requests to the correct collector and uses `references/unified-schema.md` for combined sheet rows.
+统一入口是 `skills/creator-platform-data`。它会把抖音和小红书请求路由到对应采集器，并使用 `references/unified-schema.md` 生成合并后的表格字段。
 
-## Unified Key
+## 统一主键
 
-Use `platform + data_date + content_id` when writing to a shared sheet.
+写入共享 Sheet 时，使用 `platform + data_date + content_id` 作为主键，避免重复行。
 
-## Security
+## 安全
 
-Never store cookies, `id_token`, `web_session`, `x-s`, `x-s-common`, raw auth headers, or QR images in this project. Both collectors should use local Playwright profiles and authenticated in-page requests.
+不要在项目中保存 cookie、`id_token`、`web_session`、`x-s`、`x-s-common`、原始鉴权 header 或二维码图片。两个采集器都应该使用本地 Playwright profile 和已登录页面上下文请求数据。
 
-## Xiaohongshu Example
+## 小红书示例
 
 ```bash
 /Users/orange/.codex/runtimes/douyin-creator-daily-sheet/bin/python \
@@ -32,6 +32,6 @@ Never store cookies, `id_token`, `web_session`, `x-s`, `x-s-common`, raw auth he
   --include-details
 ```
 
-## Schema
+## 字段表
 
-See `references/unified-schema.md`.
+见 `references/unified-schema.md`。

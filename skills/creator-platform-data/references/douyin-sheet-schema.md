@@ -1,13 +1,13 @@
-# Daily Snapshot Schema
+# 抖音每日快照字段表
 
-Use one row per `data_date + work_id`. Update the existing row when the same work is collected again on the same Asia/Shanghai date.
+每一行代表 `data_date + work_id` 对应的一条抖音作品快照。如果同一天再次采集到同一个作品，需要更新原行，不要重复新增。
 
-| Column | Source |
+| 字段 | 来源 |
 | --- | --- |
-| Current account name | Nickname shown by the currently logged-in Creator Center account |
-| Data date | Asia/Shanghai calendar date |
+| Current account name | 当前登录抖音创作者中心账号昵称 |
+| Data date | Asia/Shanghai 日历日期 |
 | Work ID | `id` |
-| Publish title | Empty unless the API returns an explicit title |
+| Publish title | 接口明确返回标题时填写，否则留空 |
 | Content | `description` |
 | Publish time | `create_time` |
 | Views | `metrics.view_count` |
@@ -21,6 +21,6 @@ Use one row per `data_date + work_id`. Update the existing row when the same wor
 | 5-second completion rate | `metrics.completion_rate_5s` |
 | New followers | `metrics.subscribe_count` |
 | Fan-view share | `metrics.fan_view_proportion` |
-| Collected at | Asia/Shanghai timestamp |
+| Collected at | Asia/Shanghai 采集时间 |
 
-The ratios above are API values. Render them as percentages, but do not recompute them from rounded counts.
+比例字段来自抖音接口值。可以展示为百分比，但不要根据四舍五入后的数量重新计算。

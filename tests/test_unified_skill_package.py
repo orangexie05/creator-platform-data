@@ -21,7 +21,7 @@ class UnifiedSkillPackageTests(unittest.TestCase):
         self.assertIn("name: creator-platform-data", text)
         self.assertNotIn("douyin-creator-daily-sheet", text)
         self.assertNotIn("xiaohongshu-creator-data", text)
-        self.assertIn("Use when", text.split("---", 2)[1])
+        self.assertIn("用于", text.split("---", 2)[1])
 
     def test_unified_skill_does_not_package_local_outputs_or_auth_material(self):
         packaged_files = [path.relative_to(SKILL).as_posix() for path in SKILL.rglob("*") if path.is_file()]
@@ -43,6 +43,30 @@ class UnifiedSkillPackageTests(unittest.TestCase):
         )
         for marker in raw_auth_markers:
             self.assertNotIn(marker, combined)
+
+    def test_project_and_skill_documentation_are_chinese(self):
+        paths = [
+            ROOT / "README.md",
+            ROOT / "PROJECT.md",
+            SKILL / "SKILL.md",
+            SKILL / "agents" / "openai.yaml",
+            SKILL / "references" / "unified-schema.md",
+            SKILL / "references" / "douyin-sheet-schema.md",
+            SKILL / "references" / "xiaohongshu-sheet-schema.md",
+        ]
+        required_terms = ["创作者", "抖音", "小红书", "二维码", "统一"]
+        for path in paths:
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(path=path):
+                self.assertTrue(any("\u4e00" <= char <= "\u9fff" for char in text))
+                self.assertTrue(any(term in text for term in required_terms))
+
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("## 统一 Skill", readme)
+        self.assertIn("## 平台选择", skill)
+        self.assertNotIn("## Unified Skill", readme)
+        self.assertNotIn("## Platform Decision", skill)
 
 
 if __name__ == "__main__":

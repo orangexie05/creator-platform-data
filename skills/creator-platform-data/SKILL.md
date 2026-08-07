@@ -1,27 +1,27 @@
 ---
 name: creator-platform-data
-description: Use when a user needs Douyin or Xiaohongshu creator analytics, standalone Playwright QR login, daily creator snapshots, publish-time range filtering, unified TSV output, or sheet upserts for Chinese creator-center data.
+description: 用于获取抖音或小红书创作者数据、独立 Playwright 二维码登录、每日创作者快照、按发布时间筛选、统一 TSV 输出，或把中文创作者中心数据写入 Sheet。
 ---
 
-# Creator Platform Data
+# 创作者平台数据采集
 
-Use this as the single entrypoint for creator analytics from Douyin and Xiaohongshu. Choose the platform from the user request, run the bundled collector, and map output using the unified schema.
+把这个 Skill 作为抖音和小红书创作者数据的统一入口。先根据用户请求判断平台，再运行内置采集器，并用统一字段表映射输出。
 
-Never print, store, commit, upload, or write to a sheet: cookies, tokens, signed request headers, browser profiles, QR login screenshots, raw auth material, or local exported data files.
+严禁打印、保存、提交、上传或写入 Sheet：cookie、token、签名请求头、浏览器 profile、二维码登录截图、原始鉴权信息、本地导出的数据文件。
 
-## Platform Decision
+## 平台选择
 
-| User asks for | Run |
+| 用户需求 | 运行 |
 | --- | --- |
-| 抖音, Douyin, 5秒完播率, 视频播放/完播 | `scripts/collect_douyin.py` |
-| 小红书, Xiaohongshu, 笔记数据, 2秒退出率 | `scripts/collect_xiaohongshu.py` |
-| 两个平台 / 全部创作者数据 | Run both collectors and combine by `platform + data_date + content_id` |
+| 抖音、Douyin、5秒完播率、视频播放/完播 | `scripts/collect_douyin.py` |
+| 小红书、Xiaohongshu、笔记数据、2秒退出率 | `scripts/collect_xiaohongshu.py` |
+| 两个平台 / 全部创作者数据 | 两个采集器都运行，并按 `platform + data_date + content_id` 合并 |
 
-Before writing to any sheet, read `references/unified-schema.md`. For platform-specific columns, also read `references/douyin-sheet-schema.md` or `references/xiaohongshu-sheet-schema.md`.
+写入任何 Sheet 前，先阅读 `references/unified-schema.md`。如果要处理平台专属字段，再阅读 `references/douyin-sheet-schema.md` 或 `references/xiaohongshu-sheet-schema.md`。
 
-## Douyin Collection
+## 采集抖音数据
 
-Run with a dedicated persistent profile:
+使用独立持久化 profile：
 
 ```bash
 python scripts/collect_douyin.py \
@@ -30,13 +30,13 @@ python scripts/collect_douyin.py \
   --output "$HOME/.codex/state/creator_platform_snapshots/douyin-$(date +%F).tsv"
 ```
 
-When the script emits `{"status":"login_required","qr_image":"..."}`, show only the cropped QR image to the user and keep the process alive while they scan. Use a unique QR filename; do not navigate away from the login page while waiting.
+当脚本输出 `{"status":"login_required","qr_image":"..."}` 时，只把裁剪后的二维码展示给用户，并保持进程运行等待扫码。二维码文件名必须唯一；等待扫码时不要离开登录页。
 
-Available Douyin fields include current account name, publish time, views, average watch seconds, cover CTR, likes, comments, shares, favorites, completion rate, 5-second completion rate, new followers, and fan-view share.
+抖音可获取字段包括：当前账号名称、发布时间、播放数、平均播放时长、封面点击率、点赞数、评论数、分享数、收藏数、完播率、5秒完播率、作品带来的新粉丝数、粉丝观看占比。
 
-## Xiaohongshu Collection
+## 采集小红书数据
 
-Run with a publish-time range:
+使用发布时间范围：
 
 ```bash
 python scripts/collect_xiaohongshu.py \
@@ -48,25 +48,25 @@ python scripts/collect_xiaohongshu.py \
   --include-details
 ```
 
-`--start-date` and `--end-date` filter note publish time (`笔记首发时间`), not the snapshot date. Set `--snapshot-date` separately for daily collection records when needed.
+`--start-date` 和 `--end-date` 筛选的是笔记发布时间（页面里的 `笔记首发时间`），不是快照日期。如果要做每日采集记录，单独设置 `--snapshot-date`。
 
-Important: Xiaohongshu's list API requires frontend-generated signed headers. Do not reuse pasted curl headers and do not make a bare signed-API fetch. The collector must set the visible `开始时间` / `结束时间` inputs, wait for the page's own signed response, and parse that JSON.
+重点：小红书笔记列表接口需要页面前端生成签名请求头。不要复用用户粘贴的 curl header，也不要裸请求签名接口。采集器必须填写页面可见的 `开始时间` / `结束时间` 输入框，等待页面自己发出的签名响应，并解析该 JSON。
 
-Available Xiaohongshu fields include account name, note title, publish time, exposure, views, cover CTR, likes, comments, favorites, new followers, shares, average watch seconds, danmaku, completion rate when exposed, 2-second exit rate, and fan ratios.
+小红书可获取字段包括：账号名称、笔记标题、发布时间、曝光、观看、封面点击率、点赞、评论、收藏、涨粉、分享、人均观看时长、弹幕、可展示时的完播率、2秒退出率、粉丝占比。
 
-## Sheet and Snapshot Rules
+## Sheet 和快照规则
 
-- Use TSV for local snapshots.
-- Use `platform + data_date + content_id` as the unified upsert key.
-- Preserve unrelated sheet rows.
-- Leave unavailable metrics blank; do not convert missing values to zero.
-- Do not map Xiaohongshu `2秒退出率` into Douyin's `5秒完播率`.
-- Do not map Douyin `fan_view_share` into Xiaohongshu's detail-page fan ratio fields.
+- 本地快照使用 TSV。
+- 统一表使用 `platform + data_date + content_id` 作为 upsert key。
+- 写 Sheet 时保留无关行。
+- 不可用指标留空，不要把缺失值改成 0。
+- 不要把小红书 `2秒退出率` 映射到抖音 `5秒完播率`。
+- 不要把抖音 `fan_view_share` 映射到小红书详情页粉丝占比字段。
 
-## Login Troubleshooting
+## 登录排障
 
-- Generate a fresh, unique QR image path for every login attempt.
-- Send the QR image immediately after it is created.
-- Keep the browser on the login page while waiting for scan confirmation.
-- If the session expires, rerun visibly and let the user scan again.
-- If account-name discovery fails, rerun with `--account-name`; never invent an account name.
+- 每次登录都生成新的唯一二维码图片路径。
+- 二维码生成后立即发送给用户。
+- 等待扫码时保持浏览器停留在登录页。
+- 登录态过期时，重新可视化运行并让用户扫码。
+- 如果无法识别账号名称，用 `--account-name` 重新运行；不要编造账号名。
