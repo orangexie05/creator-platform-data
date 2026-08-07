@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import importlib.util
 import json
 import re
 from datetime import datetime, time
@@ -35,6 +36,23 @@ HEADERS = [
 
 class CollectionError(RuntimeError):
     pass
+
+
+def _load_qr_vision_checker():
+    for helper in (
+        Path(__file__).with_name("qr_vision.py"),
+        Path(__file__).resolve().parents[1] / "qr_vision.py",
+    ):
+        if helper.is_file():
+            spec = importlib.util.spec_from_file_location("qr_vision", helper)
+            module = importlib.util.module_from_spec(spec)
+            assert spec.loader is not None
+            spec.loader.exec_module(module)
+            return module.image_has_qr_like_pattern
+    raise CollectionError("qr_vision.py is missing; cannot validate login QR image")
+
+
+image_has_qr_like_pattern = _load_qr_vision_checker()
 
 
 def parse_args() -> argparse.Namespace:
@@ -414,11 +432,7 @@ async def switch_to_qr_login(page: Any) -> None:
 async def wait_for_login(page: Any, login_image: Path, timeout_seconds: int) -> None:
     await switch_to_qr_login(page)
     login_image.parent.mkdir(parents=True, exist_ok=True)
-    clip = await qr_clip(page)
-    if clip:
-        await page.screenshot(path=str(login_image), clip=clip)
-    else:
-        await page.screenshot(path=str(login_image), full_page=False)
+    await save_login_image(page, login_image)
     print(json.dumps({"status": "login_required", "qr_image": str(login_image.resolve())}, ensure_ascii=False),
           flush=True)
     deadline = asyncio.get_running_loop().time() + timeout_seconds
@@ -427,6 +441,20 @@ async def wait_for_login(page: Any, login_image: Path, timeout_seconds: int) -> 
         if await page_is_logged_in(page):
             return
     raise CollectionError("Timed out waiting for Xiaohongshu Creator Center QR login")
+
+
+async def save_login_image(page: Any, login_image: Path) -> bool:
+    clip = await qr_clip(page)
+    if not clip:
+        raise CollectionError("login_qr_not_found: QR element was not found")
+    await page.screenshot(path=str(login_image), clip=clip)
+    if not image_has_qr_like_pattern(login_image):
+        try:
+            login_image.unlink()
+        except FileNotFoundError:
+            pass
+        raise CollectionError("login_qr_not_found: QR vision check failed")
+    return True
 
 
 async def request_json(page: Any, url: str) -> dict[str, Any]:

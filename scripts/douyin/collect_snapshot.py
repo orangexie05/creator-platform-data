@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import importlib.util
 import json
 import re
 from datetime import datetime
@@ -30,6 +31,23 @@ HEADERS = [
 
 class CollectionError(RuntimeError):
     pass
+
+
+def _load_qr_vision_checker():
+    for helper in (
+        Path(__file__).with_name("qr_vision.py"),
+        Path(__file__).resolve().parents[1] / "qr_vision.py",
+    ):
+        if helper.is_file():
+            spec = importlib.util.spec_from_file_location("qr_vision", helper)
+            module = importlib.util.module_from_spec(spec)
+            assert spec.loader is not None
+            spec.loader.exec_module(module)
+            return module.image_has_qr_like_pattern
+    raise CollectionError("qr_vision.py is missing; cannot validate login QR image")
+
+
+image_has_qr_like_pattern = _load_qr_vision_checker()
 
 
 def work_list_url(cursor: str, page_size: int = 12) -> str:
@@ -223,11 +241,16 @@ async def login_qr_clip(page: Any) -> dict[str, Any] | None:
 
 async def save_login_image(page: Any, login_image: Path) -> bool:
     clip = await login_qr_clip(page)
-    if clip:
-        await page.screenshot(path=str(login_image), clip=clip)
-        return True
-    await page.screenshot(path=str(login_image), full_page=False)
-    return False
+    if not clip:
+        raise CollectionError("login_qr_not_found: QR element was not found")
+    await page.screenshot(path=str(login_image), clip=clip)
+    if not image_has_qr_like_pattern(login_image):
+        try:
+            login_image.unlink()
+        except FileNotFoundError:
+            pass
+        raise CollectionError("login_qr_not_found: QR vision check failed")
+    return True
 
 
 async def login_session_is_ready(page: Any) -> bool:

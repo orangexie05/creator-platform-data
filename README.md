@@ -74,7 +74,7 @@ python scripts/douyin/collect_snapshot.py \
   --output "outputs/douyin-snapshot-$(date +%F).tsv"
 ```
 
-如果需要登录，脚本会输出包含 `qr_image` 路径的 JSON。只把裁剪后的二维码展示给用户，并保持进程运行等待用户扫码确认。
+如果需要登录，脚本会先裁剪二维码，再用 `scripts/qr_vision.py` 做本地视觉检测。只有确认截图里存在二维码时，才会输出包含 `qr_image` 路径的 JSON。不要展示整页截图、空白图或手机号登录页截图；如果输出 `login_qr_not_found`，需要重新定位二维码登录入口。
 
 ## 采集小红书数据
 

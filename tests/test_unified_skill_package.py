@@ -13,7 +13,9 @@ class UnifiedSkillPackageTests(unittest.TestCase):
         self.assertTrue((SKILL / "accounts.example.yaml").is_file())
         self.assertTrue((ROOT / "accounts.example.yaml").is_file())
         self.assertTrue((ROOT / "scripts" / "run_accounts.py").is_file())
+        self.assertTrue((ROOT / "scripts" / "qr_vision.py").is_file())
         self.assertTrue((SKILL / "scripts" / "run_accounts.py").is_file())
+        self.assertTrue((SKILL / "scripts" / "qr_vision.py").is_file())
         self.assertTrue((SKILL / "scripts" / "collect_douyin.py").is_file())
         self.assertTrue((SKILL / "scripts" / "collect_xiaohongshu.py").is_file())
         self.assertTrue((SKILL / "references" / "unified-schema.md").is_file())
@@ -111,6 +113,19 @@ class UnifiedSkillPackageTests(unittest.TestCase):
         self.assertIn("platform + account_key + data_date + content_id", unified_schema)
         self.assertIn("account_key: douyin_main", example)
         self.assertIn("account_key: xiaohongshu_main", example)
+
+    def test_login_qr_must_be_vision_checked_before_display(self):
+        text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        required_phrases = [
+            "必须先用视觉检测确认截图里存在二维码",
+            "`scripts/qr_vision.py`",
+            "`login_qr_not_found`",
+            "视觉检测失败时不要展示 `qr_image`",
+            "不要把整页截图、空白图、手机号登录页截图发给用户",
+        ]
+        for phrase in required_phrases:
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, text)
 
 
 if __name__ == "__main__":

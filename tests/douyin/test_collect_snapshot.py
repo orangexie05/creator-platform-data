@@ -1,6 +1,9 @@
 import importlib.util
+import struct
 import sys
+import tempfile
 import unittest
+import zlib
 from pathlib import Path
 
 
@@ -13,6 +16,25 @@ def load_collector():
     assert spec.loader is not None
     spec.loader.exec_module(module)
     return module
+
+
+def write_blank_png(path: Path, width: int = 120, height: int = 120) -> None:
+    raw = b"".join(b"\x00" + (b"\xff\xff\xff" * width) for _ in range(height))
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(data))
+            + kind
+            + data
+            + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+        )
+
+    path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(raw))
+        + chunk(b"IEND", b"")
+    )
 
 
 class WorkListUrlTests(unittest.TestCase):
@@ -130,6 +152,27 @@ class LoginQrClipTests(unittest.TestCase):
         self.assertEqual(clip["y"], 0)
         self.assertEqual(clip["width"], 225)
         self.assertEqual(clip["height"], 250)
+
+
+class LoginQrVisionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_rejects_login_image_when_vision_does_not_find_qr(self):
+        collector = load_collector()
+
+        class Page:
+            async def screenshot(self, path, clip):
+                write_blank_png(Path(path))
+
+        async def fake_login_qr_clip(page):
+            return {"x": 0, "y": 0, "width": 240, "height": 240}
+
+        original_login_qr_clip = collector.login_qr_clip
+        try:
+            collector.login_qr_clip = fake_login_qr_clip
+            with tempfile.TemporaryDirectory() as tmp:
+                with self.assertRaisesRegex(collector.CollectionError, "login_qr_not_found"):
+                    await collector.save_login_image(Page(), Path(tmp) / "login.png")
+        finally:
+            collector.login_qr_clip = original_login_qr_clip
 
 
 if __name__ == "__main__":

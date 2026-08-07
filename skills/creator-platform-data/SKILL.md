@@ -52,7 +52,7 @@ python scripts/collect_douyin.py \
   --output "$HOME/.codex/state/creator_platform_snapshots/douyin-$(date +%F).tsv"
 ```
 
-当脚本输出 `{"status":"login_required","qr_image":"..."}` 时，只把裁剪后的二维码展示给用户，并保持进程运行等待扫码。二维码文件名必须唯一；等待扫码时不要离开登录页。
+当脚本输出 `{"status":"login_required","qr_image":"..."}` 时，只把裁剪后的二维码展示给用户，并保持进程运行等待扫码。二维码文件名必须唯一；等待扫码时不要离开登录页。脚本必须先用视觉检测确认截图里存在二维码，视觉检测失败时不要展示 `qr_image`。
 
 抖音可获取字段包括：当前账号名称、发布时间、播放数、平均播放时长、封面点击率、点赞数、评论数、分享数、收藏数、完播率、5秒完播率、作品带来的新粉丝数、粉丝观看占比。
 
@@ -83,6 +83,8 @@ python scripts/collect_xiaohongshu.py \
 
 只有脚本输出 `login_required` 后，才展示 `qr_image` 指向的裁剪后的二维码；如果脚本输出的是 `{"status":"login_required","qr_image":"..."}`，把该图片用 Markdown 图片语法展示给用户，并保持脚本进程继续运行等待扫码。等待期间不要刷新页面、不要重新导航登录页、不要重新生成二维码，除非用户明确说二维码已过期。
 
+展示二维码前，采集器必须调用 `scripts/qr_vision.py` 对裁剪后的 PNG 做本地视觉检测。必须先用视觉检测确认截图里存在二维码；如果输出 `login_qr_not_found`，说明没有找到有效二维码或截图不像二维码，视觉检测失败时不要展示 `qr_image`，不要把整页截图、空白图、手机号登录页截图发给用户。
+
 重点：小红书笔记列表接口需要页面前端生成签名请求头。不要复用用户粘贴的 curl header，也不要裸请求签名接口。采集器必须填写页面可见的 `开始时间` / `结束时间` 输入框，等待页面自己发出的签名响应，并解析该 JSON。
 
 小红书可获取字段包括：账号名称、笔记标题、发布时间、曝光、观看、封面点击率、点赞、评论、收藏、涨粉、分享、人均观看时长、弹幕、可展示时的完播率、2秒退出率、粉丝占比。
@@ -90,7 +92,7 @@ python scripts/collect_xiaohongshu.py \
 ## Sheet 和快照规则
 
 - 本地快照使用 TSV。
-- 统一表使用 `platform + data_date + content_id` 作为 upsert key。
+- 统一表使用 `platform + account_key + data_date + content_id` 作为 upsert key。
 - 写 Sheet 时保留无关行。
 - 不可用指标留空，不要把缺失值改成 0。
 - 不要把小红书 `2秒退出率` 映射到抖音 `5秒完播率`。
@@ -99,7 +101,8 @@ python scripts/collect_xiaohongshu.py \
 ## 登录排障
 
 - 每次登录都生成新的唯一二维码图片路径。
-- 二维码生成后立即发送给用户。
+- 二维码生成后先做本地视觉检测；确认是二维码后立即发送给用户。
+- 未找到二维码、裁剪失败或视觉检测失败时，报告 `login_qr_not_found`，不要发送截图。
 - 等待扫码时保持浏览器停留在登录页。
 - 登录态过期时，重新可视化运行并让用户扫码。
 - 如果无法识别账号名称，用 `--account-name` 重新运行；不要编造账号名。
