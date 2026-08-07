@@ -1,11 +1,15 @@
 # Creator Platform Data
 
-Local project for collecting creator analytics from multiple Chinese creator centers.
+Local project for collecting creator analytics from multiple Chinese creator centers. The GitHub project exposes one unified Codex Skill at `skills/creator-platform-data`.
 
 ## Platforms
 
 - Douyin: use `scripts/douyin/collect_snapshot.py`.
 - Xiaohongshu: use `scripts/xiaohongshu/collect_xiaohongshu.py`.
+
+## Skill
+
+Use `skills/creator-platform-data` as the single Skill entrypoint. It routes Douyin and Xiaohongshu requests to the correct collector and uses `references/unified-schema.md` for combined sheet rows.
 
 ## Unified Key
 

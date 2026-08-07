@@ -1,0 +1,4 @@
+interface:
+  display_name: "Creator Platform Data"
+  short_description: "Collect Douyin and Xiaohongshu creator analytics"
+  default_prompt: "Use $creator-platform-data to collect creator analytics for Douyin or Xiaohongshu."

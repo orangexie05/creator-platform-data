@@ -1,6 +1,6 @@
 # Creator Platform Data
 
-Standalone collectors for creator analytics from Chinese creator centers.
+Standalone collectors and one unified Codex Skill for creator analytics from Chinese creator centers.
 
 Supported platforms:
 
@@ -8,6 +8,18 @@ Supported platforms:
 - Xiaohongshu Creator Center: note analytics filtered by publish-time range.
 
 This project intentionally does not depend on CreatorHub. It uses isolated Playwright persistent browser profiles so a user can scan a platform QR code once and later reuse the local browser session.
+
+## Unified Skill
+
+The main entrypoint is one Codex Skill:
+
+```text
+skills/creator-platform-data/
+```
+
+Use it when asking for Douyin, Xiaohongshu, or combined creator analytics. The Skill chooses the platform collector, handles QR-login guidance, and maps rows through the unified schema.
+
+The project-level `scripts/` folder is kept for direct CLI use and testing; the Skill bundles its own copies under `skills/creator-platform-data/scripts/`.
 
 ## Security Rules
 
