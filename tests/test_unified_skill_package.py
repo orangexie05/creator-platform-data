@@ -10,6 +10,10 @@ class UnifiedSkillPackageTests(unittest.TestCase):
     def test_unified_skill_package_exists_with_platform_collectors(self):
         self.assertTrue((SKILL / "SKILL.md").is_file())
         self.assertTrue((SKILL / "agents" / "openai.yaml").is_file())
+        self.assertTrue((SKILL / "accounts.example.yaml").is_file())
+        self.assertTrue((ROOT / "accounts.example.yaml").is_file())
+        self.assertTrue((ROOT / "scripts" / "run_accounts.py").is_file())
+        self.assertTrue((SKILL / "scripts" / "run_accounts.py").is_file())
         self.assertTrue((SKILL / "scripts" / "collect_douyin.py").is_file())
         self.assertTrue((SKILL / "scripts" / "collect_xiaohongshu.py").is_file())
         self.assertTrue((SKILL / "references" / "unified-schema.md").is_file())
@@ -32,9 +36,9 @@ class UnifiedSkillPackageTests(unittest.TestCase):
             "author" + "ization;",
             "Cook" + "ie:",
             "cook" + "ie:",
-            "web_session=",
-            "id_token=",
-            "x-s-common:",
+            "web_" + "session=",
+            "id_" + "token=",
+            "x-s-" + "common:",
         ]
         combined = "\n".join(
             path.read_text(encoding="utf-8", errors="ignore")
@@ -84,6 +88,29 @@ class UnifiedSkillPackageTests(unittest.TestCase):
         for phrase in required_phrases:
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, text)
+
+    def test_multi_account_rules_are_explicit(self):
+        skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        unified_schema = (SKILL / "references" / "unified-schema.md").read_text(encoding="utf-8")
+        example = (ROOT / "accounts.example.yaml").read_text(encoding="utf-8")
+
+        required_phrases = [
+            "accounts.example.yaml",
+            "scripts/run_accounts.py",
+            "每个平台、每个账号必须使用独立 `profile_dir`",
+            "不要用 `account_name` 作为唯一标识",
+            "`account_key`",
+            "`platform + account_key + data_date + content_id`",
+            "某个账号失败时继续采集其他账号",
+        ]
+        for phrase in required_phrases:
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, skill)
+
+        self.assertIn("account_key", unified_schema)
+        self.assertIn("platform + account_key + data_date + content_id", unified_schema)
+        self.assertIn("account_key: douyin_main", example)
+        self.assertIn("account_key: xiaohongshu_main", example)
 
 
 if __name__ == "__main__":

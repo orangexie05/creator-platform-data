@@ -21,6 +21,29 @@ skills/creator-platform-data/
 
 项目根目录下的 `scripts/` 保留给命令行直接运行和测试使用；Skill 自己也在 `skills/creator-platform-data/scripts/` 中打包了采集脚本。
 
+## 多账号配置
+
+如果有多个账号，先复制示例配置：
+
+```bash
+cp accounts.example.yaml accounts.yaml
+```
+
+然后为每个账号设置独立的 `account_key` 和 `profile_dir`。不要让两个账号共用同一个 profile；不要用账号昵称作为唯一标识。
+
+多账号采集：
+
+```bash
+python scripts/run_accounts.py \
+  --config accounts.yaml \
+  --output-dir outputs \
+  --snapshot-date 2026-08-07 \
+  --start-date 2026-05-01 \
+  --end-date 2026-07-03
+```
+
+写入统一表时，使用 `platform + account_key + data_date + content_id` 作为稳定 upsert key。
+
 ## 安全规则
 
 不要提交或发布以下内容：
@@ -46,6 +69,7 @@ python -m playwright install chromium
 ```bash
 python scripts/douyin/collect_snapshot.py \
   --profile-dir "$HOME/.codex/state/douyin-creator-profile" \
+  --account-key douyin_main \
   --login-image "$HOME/.codex/state/douyin-creator-login-$(date +%Y%m%d-%H%M%S).png" \
   --output "outputs/douyin-snapshot-$(date +%F).tsv"
 ```
@@ -57,6 +81,7 @@ python scripts/douyin/collect_snapshot.py \
 ```bash
 python scripts/xiaohongshu/collect_xiaohongshu.py \
   --profile-dir "$HOME/.codex/state/xiaohongshu-creator-profile" \
+  --account-key xiaohongshu_main \
   --login-image "$HOME/.codex/state/xiaohongshu-login-$(date +%Y%m%d-%H%M%S).png" \
   --start-date 2026-05-01 \
   --end-date 2026-07-03 \
@@ -74,7 +99,7 @@ python scripts/xiaohongshu/collect_xiaohongshu.py \
 - 抖音字段表：`references/douyin/sheet-schema.md`
 - 小红书字段表：`references/xiaohongshu/sheet-schema.md`
 
-写入统一表时，使用 `platform + data_date + content_id` 作为稳定 upsert key。
+写入统一表时，使用 `platform + account_key + data_date + content_id` 作为稳定 upsert key。
 
 ## 测试
 

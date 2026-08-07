@@ -1,4 +1,4 @@
 interface:
   display_name: "创作者平台数据采集"
-  short_description: "采集抖音和小红书创作者数据"
-  default_prompt: "使用 $creator-platform-data 获取抖音或小红书创作者数据。"
+  short_description: "采集抖音、小红书和多账号创作者数据"
+  default_prompt: "使用 $creator-platform-data 获取抖音或小红书创作者数据；多账号时读取账号配置并逐个采集。"

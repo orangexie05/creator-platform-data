@@ -13,6 +13,8 @@ venv/
 !.env.example
 
 # Creator login/session state. Never commit browser profiles or auth material.
+accounts.yaml
+accounts.local.yaml
 state/
 profiles/
 cookies/

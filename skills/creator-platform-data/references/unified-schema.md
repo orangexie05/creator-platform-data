@@ -1,12 +1,13 @@
 # 创作者平台统一字段表
 
-统一表每一行代表一个平台在某一天采集到的一条作品/笔记数据，主键使用 `platform + data_date + content_id`。
+统一表每一行代表一个平台、一个账号在某一天采集到的一条作品/笔记数据，主键使用 `platform + account_key + data_date + content_id`。
 
 字段名保持英文，方便脚本、Sheet 和后续自动任务稳定使用；字段说明使用中文。
 
 | 字段 | 抖音来源 | 小红书来源 |
 | --- | --- | --- |
 | platform | 固定为 `douyin` | 固定为 `xiaohongshu` |
+| account_key | 本地配置中的稳定账号标识 | 本地配置中的稳定账号标识 |
 | account_name | 创作者中心当前账号昵称 | 创作者中心当前账号昵称 |
 | data_date | 快照日期 | 快照日期 |
 | content_id | 作品 ID | 笔记 ID |
@@ -31,3 +32,5 @@
 | collected_at | 采集时间 | 采集时间 |
 
 不要把一个平台独有的指标强行映射到另一个平台字段中。平台没有提供的指标保持空值。
+
+多账号场景不要用 `account_name` 去重。账号昵称可能变化，也可能重复；写入 Sheet 时必须以 `account_key` 为账号维度。

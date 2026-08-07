@@ -1,0 +1,18 @@
+accounts:
+  - platform: douyin
+    account_key: douyin_main
+    account_name: 抖音主账号
+    profile_dir: ~/.codex/state/creator-platform-profiles/douyin/main
+
+  - platform: douyin
+    account_key: douyin_second
+    account_name: 抖音副账号
+    profile_dir: ~/.codex/state/creator-platform-profiles/douyin/second
+
+  - platform: xiaohongshu
+    account_key: xiaohongshu_main
+    account_name: 小红书主账号
+    profile_dir: ~/.codex/state/creator-platform-profiles/xiaohongshu/main
+    start_date: 2026-05-01
+    end_date: 2026-07-03
+    include_details: true

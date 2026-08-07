@@ -177,6 +177,7 @@ class RowMappingTests(unittest.TestCase):
         detail = {"two_second_exit_rate": "40%", "completion_rate": "0%"}
 
         row = collector.row_from_note(
+            account_key="xiaohongshu_main",
             account_name="账号",
             item=item,
             detail=detail,
@@ -185,6 +186,7 @@ class RowMappingTests(unittest.TestCase):
         )
 
         self.assertEqual(row["platform"], "xiaohongshu")
+        self.assertEqual(row["account_key"], "xiaohongshu_main")
         self.assertEqual(row["content_id"], "note-1")
         self.assertEqual(row["exposure"], 54)
         self.assertEqual(row["views"], 9)
@@ -201,6 +203,7 @@ class CommandLineTests(unittest.TestCase):
                 "collect_xiaohongshu.py",
                 "--profile-dir", "/tmp/xhs-profile",
                 "--output", "/tmp/xhs.tsv",
+                "--account-key", "xiaohongshu_main",
                 "--start-date", "2026-05-01",
                 "--end-date", "2026-07-03",
             ]
@@ -209,6 +212,7 @@ class CommandLineTests(unittest.TestCase):
             sys.argv = old_argv
 
         self.assertEqual(args.profile_dir, Path("/tmp/xhs-profile"))
+        self.assertEqual(args.account_key, "xiaohongshu_main")
         self.assertEqual(args.start_date, "2026-05-01")
         self.assertEqual(args.end_date, "2026-07-03")
 

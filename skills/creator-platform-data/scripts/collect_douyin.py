@@ -21,10 +21,10 @@ WORK_LIST_URL = "https://creator.douyin.com/janus/douyin/creator/pc/work_list"
 QR_RENDER_DELAY_MS = 1000
 QR_CLIP_PADDING = 16
 HEADERS = [
-    "current_account_name", "data_date", "work_id", "publish_title", "content",
-    "publish_time", "views", "avg_watch_seconds", "cover_ctr", "likes", "comments",
-    "shares", "favorites", "completion_rate", "completion_rate_5s", "new_followers",
-    "fan_view_share", "collected_at",
+    "platform", "account_key", "current_account_name", "data_date", "work_id",
+    "publish_title", "content", "publish_time", "views", "avg_watch_seconds",
+    "cover_ctr", "likes", "comments", "shares", "favorites", "completion_rate",
+    "completion_rate_5s", "new_followers", "fan_view_share", "collected_at",
 ]
 
 
@@ -60,6 +60,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-pages", type=int, default=100)
     parser.add_argument("--account-name",
                         help="Optional account name override when the Creator Center page cannot expose it")
+    parser.add_argument("--account-key", default="",
+                        help="Stable caller-defined account key for multi-account snapshots")
     parser.add_argument("--browser-channel",
                         help="Optional Playwright browser channel, for example chrome")
     parser.add_argument("--headless", action="store_true",
@@ -122,10 +124,13 @@ def pagination(payload: Any) -> tuple[bool, str]:
     return False, ""
 
 
-def row(account_name: str, item: dict[str, Any], snapshot_date: str, collected_at: str) -> dict[str, Any]:
+def row(account_key: str, account_name: str, item: dict[str, Any],
+        snapshot_date: str, collected_at: str) -> dict[str, Any]:
     metrics = item.get("metrics") or {}
     content = str(item.get("description") or "").replace("\t", " ").replace("\n", " ").strip()
     return {
+        "platform": "douyin",
+        "account_key": account_key,
         "current_account_name": account_name,
         "data_date": snapshot_date,
         "work_id": scalar(item.get("id")),
@@ -147,10 +152,10 @@ def row(account_name: str, item: dict[str, Any], snapshot_date: str, collected_a
     }
 
 
-def rows_from_items(account_name: str, items: list[dict[str, Any]], snapshot_date: str,
+def rows_from_items(account_key: str, account_name: str, items: list[dict[str, Any]], snapshot_date: str,
                     collected_at: str) -> list[dict[str, Any]]:
     return [
-        row(account_name, item, snapshot_date, collected_at)
+        row(account_key, account_name, item, snapshot_date, collected_at)
         for item in sorted(items, key=lambda item: item.get("create_time") or 0, reverse=True)
     ]
 
@@ -376,7 +381,7 @@ def main() -> int:
     except CollectionError as exc:
         print(f"[douyin-creator-snapshot] ERROR: {exc}")
         return 2
-    rows = rows_from_items(account_name, items, snapshot_date, now.strftime("%Y-%m-%d %H:%M:%S"))
+    rows = rows_from_items(args.account_key, account_name, items, snapshot_date, now.strftime("%Y-%m-%d %H:%M:%S"))
     write_snapshot(args.output, rows)
     print(f"[douyin-creator-snapshot] collected={len(rows)} output={args.output}")
     return 0

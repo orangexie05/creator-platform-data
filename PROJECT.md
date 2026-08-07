@@ -6,6 +6,7 @@
 
 - 抖音：使用 `scripts/douyin/collect_snapshot.py`。
 - 小红书：使用 `scripts/xiaohongshu/collect_xiaohongshu.py`。
+- 多账号：复制 `accounts.example.yaml` 为本地 `accounts.yaml`，再使用 `scripts/run_accounts.py`。
 
 ## Skill
 
@@ -13,7 +14,7 @@
 
 ## 统一主键
 
-写入共享 Sheet 时，使用 `platform + data_date + content_id` 作为主键，避免重复行。
+写入共享 Sheet 时，使用 `platform + account_key + data_date + content_id` 作为主键，避免多个账号之间的数据互相覆盖。
 
 ## 安全
 

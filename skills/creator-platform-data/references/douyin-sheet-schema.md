@@ -1,9 +1,11 @@
 # 抖音每日快照字段表
 
-每一行代表 `data_date + work_id` 对应的一条抖音作品快照。如果同一天再次采集到同一个作品，需要更新原行，不要重复新增。
+每一行代表 `account_key + data_date + work_id` 对应的一条抖音作品快照。如果同一账号同一天再次采集到同一个作品，需要更新原行，不要重复新增。
 
 | 字段 | 来源 |
 | --- | --- |
+| Platform | 固定为 `douyin` |
+| Account key | 本地配置中的稳定账号标识 |
 | Current account name | 当前登录抖音创作者中心账号昵称 |
 | Data date | Asia/Shanghai 日历日期 |
 | Work ID | `id` |

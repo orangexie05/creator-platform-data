@@ -50,12 +50,14 @@ class SnapshotRowsTests(unittest.TestCase):
         }]
 
         rows = collector.rows_from_items(
+            account_key="douyin_main",
             account_name="测试账号",
             items=items,
             snapshot_date="2026-08-06",
             collected_at="2026-08-06 13:00:00",
         )
 
+        self.assertEqual(rows[0]["account_key"], "douyin_main")
         self.assertEqual(rows[0]["work_id"], "work-1")
         self.assertEqual(rows[0]["content"], "A post with a newline")
         self.assertEqual(rows[0]["cover_ctr"], "12.50%")
@@ -72,6 +74,7 @@ class CommandLineTests(unittest.TestCase):
                 "collect_snapshot.py",
                 "--profile-dir", "/tmp/douyin-profile",
                 "--output", "/tmp/snapshot.tsv",
+                "--account-key", "douyin_main",
             ]
             args = collector.parse_args()
         finally:
@@ -79,6 +82,7 @@ class CommandLineTests(unittest.TestCase):
 
         self.assertEqual(args.profile_dir, Path("/tmp/douyin-profile"))
         self.assertEqual(args.output, Path("/tmp/snapshot.tsv"))
+        self.assertEqual(args.account_key, "douyin_main")
 
 
 class LoginRenderTests(unittest.IsolatedAsyncioTestCase):

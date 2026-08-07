@@ -22,10 +22,10 @@ NOTE_LIST_URL = "https://creator.xiaohongshu.com/api/galaxy/creator/datacenter/n
 QR_RENDER_DELAY_MS = 1000
 QR_CLIP_PADDING = 16
 HEADERS = [
-    "platform", "account_name", "data_date", "content_id", "title", "content",
-    "publish_time", "exposure", "views", "cover_ctr", "likes", "comments",
-    "favorites", "new_followers", "shares", "avg_watch_seconds", "danmaku",
-    "two_second_exit_rate", "completion_rate", "exposure_fan_share",
+    "platform", "account_key", "account_name", "data_date", "content_id", "title",
+    "content", "publish_time", "exposure", "views", "cover_ctr", "likes",
+    "comments", "favorites", "new_followers", "shares", "avg_watch_seconds",
+    "danmaku", "two_second_exit_rate", "completion_rate", "exposure_fan_share",
     "views_fan_share", "cover_ctr_fan_share", "avg_watch_fan_seconds",
     "completion_fan_share", "two_second_exit_fan_share", "likes_fan_share",
     "comments_fan_share", "favorites_fan_share", "shares_fan_share",
@@ -54,6 +54,8 @@ def parse_args() -> argparse.Namespace:
                         help="Xiaohongshu note type filter; 0 means all")
     parser.add_argument("--account-name",
                         help="Optional account name override when the page cannot expose it")
+    parser.add_argument("--account-key", default="",
+                        help="Stable caller-defined account key for multi-account snapshots")
     parser.add_argument("--include-details", action="store_true",
                         help="Open each note detail page and collect completion/2-second exit metrics")
     parser.add_argument("--browser-channel",
@@ -236,11 +238,12 @@ def parse_detail_lines(lines: list[str]) -> dict[str, Any]:
     return metrics
 
 
-def row_from_note(account_name: str, item: dict[str, Any], detail: dict[str, Any],
+def row_from_note(account_key: str, account_name: str, item: dict[str, Any], detail: dict[str, Any],
                   snapshot_date: str, collected_at: str) -> dict[str, Any]:
     merged = dict(detail)
     return {
         "platform": "xiaohongshu",
+        "account_key": account_key,
         "account_name": account_name,
         "data_date": snapshot_date,
         "content_id": str(note_id(item)),
@@ -614,6 +617,7 @@ async def collect(args: argparse.Namespace) -> tuple[str, list[dict[str, Any]]]:
                     details[str(note_id(item))] = await collect_detail(page, item)
             return account_name, [
                 row_from_note(
+                    args.account_key,
                     account_name,
                     item,
                     details.get(str(note_id(item)), {}),

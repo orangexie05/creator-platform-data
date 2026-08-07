@@ -1,10 +1,11 @@
 # 小红书创作者快照字段表
 
-每一行代表 `data_date + content_id` 对应的一条小红书笔记快照。若写入统一多平台表，主键使用 `platform + data_date + content_id`。
+每一行代表 `account_key + data_date + content_id` 对应的一条小红书笔记快照。若写入统一多平台表，主键使用 `platform + account_key + data_date + content_id`。
 
 | 字段 | 来源 |
 | --- | --- |
 | platform | 固定为 `xiaohongshu` |
+| account_key | 本地配置中的稳定账号标识 |
 | account_name | 创作者中心可见账号昵称 |
 | data_date | Asia/Shanghai 快照日期 |
 | content_id | 笔记 ID |
