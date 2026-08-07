@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local runtime and environment
+.env
+.env.*
+!.env.example
+
+# Creator login/session state. Never commit browser profiles or auth material.
+state/
+profiles/
+cookies/
+tokens/
+*.har
+*.trace.zip
+storage-state*.json
+
+# QR/login screenshots and exported creator data
+outputs/
+*.login.png
+*login*.png
+*qr*.png
+*.tsv
+*.csv
+*.xlsx
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
