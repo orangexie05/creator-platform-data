@@ -68,6 +68,23 @@ class UnifiedSkillPackageTests(unittest.TestCase):
         self.assertNotIn("## Unified Skill", readme)
         self.assertNotIn("## Platform Decision", skill)
 
+    def test_xiaohongshu_qr_login_step_is_mandatory_and_script_driven(self):
+        text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+
+        required_phrases = [
+            "必须运行 `scripts/collect_xiaohongshu.py`",
+            "必须点击二维码登录入口",
+            "不要停在手机号/验证码登录页",
+            "login_required",
+            "qr_image",
+            "只有脚本输出 `login_required` 后，才展示 `qr_image`",
+            "不要要求用户自己找二维码",
+            "裁剪后的二维码",
+        ]
+        for phrase in required_phrases:
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, text)
+
 
 if __name__ == "__main__":
     unittest.main()
