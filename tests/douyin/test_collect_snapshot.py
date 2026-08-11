@@ -234,6 +234,19 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(page.field.filled, "123456")
         self.assertEqual(page.field.pressed, "Enter")
 
+    async def test_does_not_probe_work_list_while_qr_login_text_is_visible(self):
+        collector = load_collector()
+
+        class Locator:
+            async def count(self):
+                return 1
+
+        class Page:
+            def get_by_text(self, text, exact):
+                return Locator()
+
+        self.assertFalse(await collector.can_probe_login_api(Page()))
+
 
 class LoginQrClipTests(unittest.TestCase):
     def test_padded_clip_stays_inside_viewport(self):

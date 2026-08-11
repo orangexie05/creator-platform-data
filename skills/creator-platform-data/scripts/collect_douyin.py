@@ -235,6 +235,13 @@ async def handle_sms_challenge(page: Any, already_sent: bool = False) -> bool:
     return False
 
 
+async def can_probe_login_api(page: Any) -> bool:
+    try:
+        return await page.get_by_text("扫码登录", exact=True).count() == 0
+    except Exception:
+        return False
+
+
 async def enter_sms_code(page: Any, code: str) -> None:
     fields = page.locator(SMS_CODE_SELECTOR)
     count = await fields.count()
@@ -388,7 +395,9 @@ async def wait_for_login(page: Any, login_image: Path, timeout_seconds: int) -> 
             sms_sent = await handle_sms_challenge(page, already_sent=False)
             if sms_sent:
                 await enter_sms_code(page, await read_sms_code(timeout_seconds))
-        if await login_session_is_ready(page):
+        if await page_is_logged_in(page):
+            return
+        if await can_probe_login_api(page) and await login_session_is_ready(page):
             return
     raise CollectionError("Timed out waiting for a Douyin Creator Center QR login")
 
