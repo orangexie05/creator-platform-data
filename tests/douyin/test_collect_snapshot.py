@@ -197,6 +197,43 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(sent_again)
         self.assertEqual(page.sender.clicks, 1)
 
+    async def test_fills_sms_code_and_submits_in_the_open_browser(self):
+        collector = load_collector()
+
+        class Locator:
+            def __init__(self):
+                self.filled = None
+                self.pressed = None
+
+            @property
+            def first(self):
+                return self
+
+            async def count(self):
+                return 1
+
+            async def fill(self, value):
+                self.filled = value
+
+            async def press(self, key):
+                self.pressed = key
+
+        class Page:
+            def __init__(self):
+                self.field = Locator()
+                self.selector = None
+
+            def locator(self, selector):
+                self.selector = selector
+                return self.field
+
+        page = Page()
+        await collector.enter_sms_code(page, "123456")
+
+        self.assertIn("验证码", page.selector)
+        self.assertEqual(page.field.filled, "123456")
+        self.assertEqual(page.field.pressed, "Enter")
+
 
 class LoginQrClipTests(unittest.TestCase):
     def test_padded_clip_stays_inside_viewport(self):

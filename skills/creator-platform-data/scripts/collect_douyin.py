@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import getpass
 import importlib.util
 import json
 import re
@@ -23,6 +24,10 @@ QR_RENDER_DELAY_MS = 4000
 QR_CLIP_PADDING = 16
 SMS_CHALLENGE_MARKERS = ("短信验证", "短信验证码", "手机验证")
 SMS_SEND_LABELS = ("发送短信", "发送验证码", "获取验证码")
+SMS_CODE_SELECTOR = (
+    'input[placeholder*="验证码"], input[autocomplete="one-time-code"], '
+    'input[name*="code"], input[type="tel"]'
+)
 HEADERS = [
     "platform", "account_key", "current_account_name", "data_date", "work_id",
     "publish_title", "content", "publish_time", "views", "avg_watch_seconds",
@@ -220,7 +225,7 @@ async def handle_sms_challenge(page: Any, already_sent: bool = False) -> bool:
             json.dumps(
                 {
                     "status": "sms_verification_required",
-                    "message": "已点击发送短信，请直接在打开的抖音浏览器页面输入验证码并完成确认",
+                    "message": "本次登录需要短信验证码，已点击发送验证码，请将本次验证码发给我",
                 },
                 ensure_ascii=False,
             ),
@@ -228,6 +233,50 @@ async def handle_sms_challenge(page: Any, already_sent: bool = False) -> bool:
         )
         return True
     return False
+
+
+async def enter_sms_code(page: Any, code: str) -> None:
+    fields = page.locator(SMS_CODE_SELECTOR)
+    count = await fields.count()
+    if count == 0:
+        raise CollectionError("sms_code_input_not_found")
+
+    if count == 1:
+        field = fields.first
+        await field.fill(code)
+        await field.press("Enter")
+        return
+
+    digits = re.sub(r"\D", "", code)
+    if len(digits) < count:
+        raise CollectionError("sms_code_input_count_exceeds_code_length")
+    for index, digit in enumerate(digits[:count]):
+        await fields.nth(index).fill(digit)
+    await fields.nth(count - 1).press("Enter")
+
+
+async def read_sms_code(timeout_seconds: int) -> str:
+    print(
+        json.dumps(
+            {
+                "status": "sms_code_input_required",
+                "message": "请将本次短信验证码发给我；验证码只用于当前登录，不会打印或保存",
+            },
+            ensure_ascii=False,
+        ),
+        flush=True,
+    )
+    try:
+        code = await asyncio.wait_for(
+            asyncio.to_thread(getpass.getpass, ""),
+            timeout=timeout_seconds,
+        )
+    except asyncio.TimeoutError as exc:
+        raise CollectionError("Timed out waiting for the SMS verification code") from exc
+    code = re.sub(r"\s+", "", code)
+    if not re.fullmatch(r"\d{4,8}", code):
+        raise CollectionError("SMS verification code must contain 4-8 digits")
+    return code
 
 
 def padded_clip(rect: dict[str, Any], viewport: dict[str, Any], padding: int = QR_CLIP_PADDING) -> dict[str, Any]:
@@ -335,7 +384,10 @@ async def wait_for_login(page: Any, login_image: Path, timeout_seconds: int) -> 
     sms_sent = False
     while asyncio.get_running_loop().time() < deadline:
         await page.wait_for_timeout(1500)
-        sms_sent = await handle_sms_challenge(page, already_sent=sms_sent)
+        if not sms_sent:
+            sms_sent = await handle_sms_challenge(page, already_sent=False)
+            if sms_sent:
+                await enter_sms_code(page, await read_sms_code(timeout_seconds))
         if await login_session_is_ready(page):
             return
     raise CollectionError("Timed out waiting for a Douyin Creator Center QR login")
