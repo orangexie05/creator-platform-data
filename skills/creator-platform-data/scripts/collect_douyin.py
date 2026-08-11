@@ -252,6 +252,13 @@ async def handle_sms_challenge(page: Any, already_sent: bool = False) -> bool:
     return False
 
 
+async def sms_code_form_visible(page: Any) -> bool:
+    try:
+        return await page.locator(SMS_CODE_SELECTOR).count() > 0
+    except Exception:
+        return False
+
+
 async def can_probe_login_api(page: Any) -> bool:
     try:
         return await page.get_by_text("扫码登录", exact=True).count() == 0
@@ -413,8 +420,9 @@ async def wait_for_login(page: Any, login_image: Path, timeout_seconds: int) -> 
             sms_option_selected = await select_sms_verification_option(page, already_selected=False)
         if sms_option_selected and not sms_sent:
             sms_sent = await handle_sms_challenge(page, already_sent=False)
-            if sms_sent:
+            if sms_sent or await sms_code_form_visible(page):
                 await enter_sms_code(page, await read_sms_code(timeout_seconds))
+                sms_sent = True
         if await page_is_logged_in(page):
             return
         if await can_probe_login_api(page) and await login_session_is_ready(page):

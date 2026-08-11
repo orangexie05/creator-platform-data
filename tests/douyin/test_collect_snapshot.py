@@ -273,6 +273,20 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(page.field.filled, "123456")
         self.assertEqual(page.field.pressed, "Enter")
 
+    async def test_detects_sms_code_form_after_receive_option(self):
+        collector = load_collector()
+
+        class Fields:
+            async def count(self):
+                return 1
+
+        class Page:
+            def locator(self, selector):
+                self.selector = selector
+                return Fields()
+
+        self.assertTrue(await collector.sms_code_form_visible(Page()))
+
     async def test_does_not_probe_work_list_while_qr_login_text_is_visible(self):
         collector = load_collector()
 
