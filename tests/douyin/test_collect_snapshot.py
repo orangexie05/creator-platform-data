@@ -197,6 +197,41 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(sent_again)
         self.assertEqual(page.sender.clicks, 1)
 
+    async def test_recognizes_douyin_send_sms_verification_label(self):
+        collector = load_collector()
+
+        class Locator:
+            def __init__(self, count):
+                self._count = count
+                self.clicks = 0
+
+            @property
+            def first(self):
+                return self
+
+            async def count(self):
+                return self._count
+
+            async def click(self):
+                self.clicks += 1
+
+        class Page:
+            def __init__(self):
+                self.sender = Locator(1)
+
+            def get_by_text(self, text, exact):
+                if text == "发送短信验证":
+                    return Locator(1)
+                if text == "发送验证码":
+                    return self.sender
+                return Locator(0)
+
+        page = Page()
+        sent = await collector.handle_sms_challenge(page, already_sent=False)
+
+        self.assertTrue(sent)
+        self.assertEqual(page.sender.clicks, 1)
+
     async def test_fills_sms_code_and_submits_in_the_open_browser(self):
         collector = load_collector()
 
