@@ -217,19 +217,23 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
 
         class Page:
             def __init__(self):
+                self.option = Locator(1)
                 self.sender = Locator(1)
 
             def get_by_text(self, text, exact):
                 if text == "发送短信验证":
-                    return Locator(1)
+                    return self.option
                 if text == "发送验证码":
                     return self.sender
                 return Locator(0)
 
         page = Page()
+        option_selected = await collector.select_sms_verification_option(page, already_selected=False)
         sent = await collector.handle_sms_challenge(page, already_sent=False)
 
+        self.assertTrue(option_selected)
         self.assertTrue(sent)
+        self.assertEqual(page.option.clicks, 1)
         self.assertEqual(page.sender.clicks, 1)
 
     async def test_fills_sms_code_and_submits_in_the_open_browser(self):
