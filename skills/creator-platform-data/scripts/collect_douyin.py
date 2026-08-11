@@ -179,10 +179,13 @@ def rows_from_items(account_key: str, account_name: str, items: list[dict[str, A
 
 
 async def page_is_logged_in(page: Any) -> bool:
-    try:
-        return await page.get_by_text("作品管理", exact=True).count() > 0
-    except Exception:
-        return False
+    for text in ("作品管理", "内容管理", "数据中心"):
+        try:
+            if await page.get_by_text(text, exact=True).count() > 0:
+                return True
+        except Exception:
+            continue
+    return False
 
 
 async def wait_for_qr_login(page: Any) -> None:

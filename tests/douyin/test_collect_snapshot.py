@@ -108,6 +108,22 @@ class CommandLineTests(unittest.TestCase):
 
 
 class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
+    async def test_detects_current_content_management_page_as_logged_in(self):
+        collector = load_collector()
+
+        class Locator:
+            def __init__(self, count):
+                self._count = count
+
+            async def count(self):
+                return self._count
+
+        class Page:
+            def get_by_text(self, text, exact):
+                return Locator(1 if text == "内容管理" else 0)
+
+        self.assertTrue(await collector.page_is_logged_in(Page()))
+
     async def test_waits_for_qr_login_element_before_capturing(self):
         collector = load_collector()
 
