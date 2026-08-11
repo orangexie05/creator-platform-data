@@ -28,6 +28,7 @@ SMS_CODE_SELECTOR = (
     'input[placeholder*="验证码"], input[autocomplete="one-time-code"], '
     'input[name*="code"], input[type="tel"]'
 )
+SMS_SUBMIT_LABELS = ("确认登录", "确认", "登录", "确定", "提交", "下一步")
 HEADERS = [
     "platform", "account_key", "current_account_name", "data_date", "work_id",
     "publish_title", "content", "publish_time", "views", "avg_watch_seconds",
@@ -276,6 +277,7 @@ async def enter_sms_code(page: Any, code: str) -> None:
         field = fields.first
         await field.fill(code)
         await field.press("Enter")
+        await submit_sms_code(page)
         return
 
     digits = re.sub(r"\D", "", code)
@@ -284,6 +286,20 @@ async def enter_sms_code(page: Any, code: str) -> None:
     for index, digit in enumerate(digits[:count]):
         await fields.nth(index).fill(digit)
     await fields.nth(count - 1).press("Enter")
+    await submit_sms_code(page)
+
+
+async def submit_sms_code(page: Any) -> bool:
+    for label in SMS_SUBMIT_LABELS:
+        try:
+            button = page.get_by_text(label, exact=True)
+            if await button.count() == 0:
+                continue
+            await button.first.click()
+            return True
+        except Exception:
+            continue
+    return False
 
 
 async def read_sms_code(timeout_seconds: int) -> str:

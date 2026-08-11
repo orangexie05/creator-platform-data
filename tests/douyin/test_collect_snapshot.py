@@ -273,6 +273,48 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(page.field.filled, "123456")
         self.assertEqual(page.field.pressed, "Enter")
 
+    async def test_clicks_visible_sms_confirmation_button_after_filling_code(self):
+        collector = load_collector()
+
+        class Locator:
+            def __init__(self, count=1):
+                self._count = count
+                self.filled = None
+                self.pressed = None
+                self.clicks = 0
+
+            @property
+            def first(self):
+                return self
+
+            async def count(self):
+                return self._count
+
+            async def fill(self, value):
+                self.filled = value
+
+            async def press(self, key):
+                self.pressed = key
+
+            async def click(self):
+                self.clicks += 1
+
+        class Page:
+            def __init__(self):
+                self.field = Locator()
+                self.confirm = Locator()
+
+            def locator(self, selector):
+                return self.field
+
+            def get_by_text(self, text, exact):
+                return self.confirm if text == "确认" else Locator(0)
+
+        page = Page()
+        await collector.enter_sms_code(page, "123456")
+
+        self.assertEqual(page.confirm.clicks, 1)
+
     async def test_detects_sms_code_form_after_receive_option(self):
         collector = load_collector()
 
