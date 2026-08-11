@@ -28,7 +28,7 @@ SMS_CODE_SELECTOR = (
     'input[placeholder*="验证码"], input[autocomplete="one-time-code"], '
     'input[name*="code"], input[type="tel"]'
 )
-SMS_SUBMIT_LABELS = ("确认登录", "确认", "登录", "确定", "提交", "下一步")
+SMS_SUBMIT_LABELS = ("验证", "确认登录", "确认", "登录", "确定", "提交", "下一步")
 HEADERS = [
     "platform", "account_key", "current_account_name", "data_date", "work_id",
     "publish_title", "content", "publish_time", "views", "avg_watch_seconds",

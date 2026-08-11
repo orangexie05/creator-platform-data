@@ -308,7 +308,7 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
                 return self.field
 
             def get_by_text(self, text, exact):
-                return self.confirm if text == "确认" else Locator(0)
+                return self.confirm if text == "验证" else Locator(0)
 
         page = Page()
         await collector.enter_sms_code(page, "123456")
