@@ -108,6 +108,12 @@ class CommandLineTests(unittest.TestCase):
 
 
 class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
+    async def test_waits_three_to_six_seconds_before_capturing_douyin_qr(self):
+        collector = load_collector()
+
+        self.assertGreaterEqual(collector.QR_RENDER_DELAY_MS, 3000)
+        self.assertLessEqual(collector.QR_RENDER_DELAY_MS, 6000)
+
     async def test_detects_current_content_management_page_as_logged_in(self):
         collector = load_collector()
 
@@ -152,6 +158,44 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(page.text, ("扫码登录", True))
         self.assertEqual(page.locator.waited_for[0], "visible")
         self.assertEqual(page.waited_for_ms, collector.QR_RENDER_DELAY_MS)
+
+    async def test_clicks_send_sms_once_when_sms_verification_appears(self):
+        collector = load_collector()
+
+        class Locator:
+            def __init__(self, count):
+                self._count = count
+                self.clicks = 0
+
+            @property
+            def first(self):
+                return self
+
+            async def count(self):
+                return self._count
+
+            async def click(self):
+                self.clicks += 1
+
+        class Page:
+            def __init__(self):
+                self.marker = Locator(1)
+                self.sender = Locator(1)
+
+            def get_by_text(self, text, exact):
+                if text == "短信验证码":
+                    return self.marker
+                if text == "发送短信":
+                    return self.sender
+                return Locator(0)
+
+        page = Page()
+        sent = await collector.handle_sms_challenge(page, already_sent=False)
+        sent_again = await collector.handle_sms_challenge(page, already_sent=sent)
+
+        self.assertTrue(sent)
+        self.assertTrue(sent_again)
+        self.assertEqual(page.sender.clicks, 1)
 
 
 class LoginQrClipTests(unittest.TestCase):

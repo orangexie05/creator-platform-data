@@ -19,8 +19,10 @@ TZ = ZoneInfo("Asia/Shanghai")
 CREATOR_HOME_URL = "https://creator.douyin.com/"
 CONTENT_MANAGE_URL = "https://creator.douyin.com/creator-micro/content/manage"
 WORK_LIST_URL = "https://creator.douyin.com/janus/douyin/creator/pc/work_list"
-QR_RENDER_DELAY_MS = 1000
+QR_RENDER_DELAY_MS = 4000
 QR_CLIP_PADDING = 16
+SMS_CHALLENGE_MARKERS = ("短信验证", "短信验证码", "手机验证")
+SMS_SEND_LABELS = ("发送短信", "发送验证码", "获取验证码")
 HEADERS = [
     "platform", "account_key", "current_account_name", "data_date", "work_id",
     "publish_title", "content", "publish_time", "views", "avg_watch_seconds",
@@ -193,6 +195,41 @@ async def wait_for_qr_login(page: Any) -> None:
     await page.wait_for_timeout(QR_RENDER_DELAY_MS)
 
 
+async def handle_sms_challenge(page: Any, already_sent: bool = False) -> bool:
+    """Click the SMS send action once and let the user enter the code in the browser."""
+    if already_sent:
+        return True
+
+    challenge_visible = False
+    for marker in SMS_CHALLENGE_MARKERS:
+        if await page.get_by_text(marker, exact=False).count() > 0:
+            challenge_visible = True
+            break
+    if not challenge_visible:
+        return False
+
+    for label in SMS_SEND_LABELS:
+        sender = page.get_by_text(label, exact=True)
+        if await sender.count() == 0:
+            continue
+        try:
+            await sender.first.click()
+        except Exception:
+            continue
+        print(
+            json.dumps(
+                {
+                    "status": "sms_verification_required",
+                    "message": "已点击发送短信，请直接在打开的抖音浏览器页面输入验证码并完成确认",
+                },
+                ensure_ascii=False,
+            ),
+            flush=True,
+        )
+        return True
+    return False
+
+
 def padded_clip(rect: dict[str, Any], viewport: dict[str, Any], padding: int = QR_CLIP_PADDING) -> dict[str, Any]:
     x = max(0, float(rect["x"]) - padding)
     y = max(0, float(rect["y"]) - padding)
@@ -295,8 +332,10 @@ async def wait_for_login(page: Any, login_image: Path, timeout_seconds: int) -> 
     )
 
     deadline = asyncio.get_running_loop().time() + timeout_seconds
+    sms_sent = False
     while asyncio.get_running_loop().time() < deadline:
         await page.wait_for_timeout(1500)
+        sms_sent = await handle_sms_challenge(page, already_sent=sms_sent)
         if await login_session_is_ready(page):
             return
     raise CollectionError("Timed out waiting for a Douyin Creator Center QR login")
