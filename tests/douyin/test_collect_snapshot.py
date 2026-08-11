@@ -197,7 +197,7 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(sent_again)
         self.assertEqual(page.sender.clicks, 1)
 
-    async def test_recognizes_douyin_send_sms_verification_label(self):
+    async def test_prefers_receive_sms_verification_option(self):
         collector = load_collector()
 
         class Locator:
@@ -221,7 +221,7 @@ class LoginRenderTests(unittest.IsolatedAsyncioTestCase):
                 self.sender = Locator(1)
 
             def get_by_text(self, text, exact):
-                if text == "发送短信验证":
+                if text == "接收短信验证码":
                     return self.option
                 if text == "发送验证码":
                     return self.sender

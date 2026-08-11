@@ -22,7 +22,7 @@ CONTENT_MANAGE_URL = "https://creator.douyin.com/creator-micro/content/manage"
 WORK_LIST_URL = "https://creator.douyin.com/janus/douyin/creator/pc/work_list"
 QR_RENDER_DELAY_MS = 4000
 QR_CLIP_PADDING = 16
-SMS_OPTION_LABELS = ("发送短信验证",)
+SMS_OPTION_LABELS = ("接收短信验证码", "发送短信验证")
 SMS_SEND_LABELS = ("发送短信", "发送验证码", "获取验证码")
 SMS_CODE_SELECTOR = (
     'input[placeholder*="验证码"], input[autocomplete="one-time-code"], '
