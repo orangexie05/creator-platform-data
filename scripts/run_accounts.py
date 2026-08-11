@@ -29,6 +29,7 @@ class Account:
         start_date: str | None = None,
         end_date: str | None = None,
         include_details: bool = False,
+        browser_channel: str | None = None,
     ) -> None:
         self.platform = platform
         self.account_key = account_key
@@ -37,6 +38,7 @@ class Account:
         self.start_date = start_date
         self.end_date = end_date
         self.include_details = include_details
+        self.browser_channel = browser_channel
 
 
 def parse_args() -> argparse.Namespace:
@@ -151,6 +153,7 @@ def load_accounts(config_path: Path) -> list[Account]:
             start_date=str(item["start_date"]) if item.get("start_date") else None,
             end_date=str(item["end_date"]) if item.get("end_date") else None,
             include_details=bool(item.get("include_details", False)),
+            browser_channel=str(item["browser_channel"]) if item.get("browser_channel") else None,
         ))
 
     return accounts
@@ -198,6 +201,8 @@ def build_command(
         "--account-key", account.account_key,
         "--account-name", account.account_name,
     ]
+    if account.browser_channel:
+        command.extend(["--browser-channel", account.browser_channel])
     if account.platform == "xiaohongshu":
         if not account.start_date or not account.end_date:
             raise ConfigError(f"Xiaohongshu account {account.account_key} requires start_date and end_date")

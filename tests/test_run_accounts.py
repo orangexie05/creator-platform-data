@@ -57,6 +57,7 @@ accounts:
                 start_date="2026-05-01",
                 end_date="2026-07-03",
                 include_details=True,
+                browser_channel="chrome",
             )
             command = runner.build_command(
                 account=account,
@@ -73,6 +74,7 @@ accounts:
         self.assertIn("/tmp/out/xiaohongshu-xiaohongshu_main-2026-08-07.tsv", joined)
         self.assertIn("/tmp/out/xiaohongshu-xiaohongshu_main-login-20260807-130000.png", joined)
         self.assertIn("--include-details", joined)
+        self.assertIn("--browser-channel chrome", joined)
 
 
 class CommandLineTests(unittest.TestCase):
