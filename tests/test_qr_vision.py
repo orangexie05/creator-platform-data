@@ -49,14 +49,24 @@ def finder_pattern(matrix: list[list[int]], left: int, top: int) -> None:
             matrix[top + y][left + x] = 1 if outer or center else 0
 
 
-def make_qr_like_png(path: Path, scale: int = 8) -> None:
+def make_qr_like_png(path: Path, scale: int = 8, finder_count: int = 3) -> None:
     modules = 29
     matrix = [[0 for _ in range(modules)] for _ in range(modules)]
-    finder_pattern(matrix, 1, 1)
-    finder_pattern(matrix, modules - 8, 1)
-    finder_pattern(matrix, 1, modules - 8)
-    for y in range(9, modules - 9):
-        for x in range(9, modules - 9):
+    if finder_count >= 1:
+        finder_pattern(matrix, 1, 1)
+    if finder_count >= 2:
+        finder_pattern(matrix, modules - 8, 1)
+    if finder_count >= 3:
+        finder_pattern(matrix, 1, modules - 8)
+    for y in range(modules):
+        for x in range(modules):
+            if matrix[y][x]:
+                continue
+            in_top_left = x < 9 and y < 9
+            in_top_right = x >= modules - 9 and y < 9
+            in_bottom_left = x < 9 and y >= modules - 9
+            if in_top_left or in_top_right or in_bottom_left:
+                continue
             matrix[y][x] = 1 if (x * 3 + y * 5) % 4 in {0, 1} else 0
 
     pixels: list[list[tuple[int, int, int]]] = []
@@ -82,6 +92,24 @@ class QrVisionTests(unittest.TestCase):
 
             self.assertTrue(qr_vision.image_has_qr_like_pattern(qr_path))
             self.assertFalse(qr_vision.image_has_qr_like_pattern(blank_path))
+
+    def test_accepts_dense_qr_like_image_with_one_visible_finder(self):
+        qr_vision = load_qr_vision()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            qr_path = Path(tmp) / "one-finder-qr.png"
+            make_qr_like_png(qr_path, finder_count=1)
+
+            self.assertTrue(qr_vision.image_has_qr_like_pattern(qr_path))
+
+    def test_accepts_dense_qr_like_image_even_when_finders_are_obscured(self):
+        qr_vision = load_qr_vision()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            qr_path = Path(tmp) / "dense-qr.png"
+            make_qr_like_png(qr_path, finder_count=0)
+
+            self.assertTrue(qr_vision.image_has_qr_like_pattern(qr_path))
 
 
 if __name__ == "__main__":

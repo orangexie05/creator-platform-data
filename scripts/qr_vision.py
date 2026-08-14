@@ -174,11 +174,16 @@ def image_has_qr_like_pattern(path: Path | str) -> bool:
     dark_ratio = sum(cell for row in grid for cell in row) / (len(grid) * len(grid[0]))
     if dark_ratio < 0.18 or dark_ratio > 0.68:
         return False
-    if _transition_ratio(grid) < 0.12:
+    transition_ratio = _transition_ratio(grid)
+    if transition_ratio < 0.12:
         return False
 
     finder_count = sum(
         _corner_has_finder(grid, corner)
         for corner in ("top-left", "top-right", "bottom-left")
     )
-    return finder_count >= 2
+    if finder_count >= 2:
+        return True
+    if finder_count >= 1 and transition_ratio >= 0.22:
+        return True
+    return transition_ratio >= 0.24 and 0.22 <= dark_ratio <= 0.55
